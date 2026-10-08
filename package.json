@@ -16,6 +16,7 @@
   "dependencies": {
     "@astrojs/node": "^11.1.6",
     "@astrojs/svelte": "^9.0.1",
+    "@astrojs/vercel": "^11.0.12",
     "@tailwindcss/vite": "^4.3.3",
     "@types/nodemailer": "^8.0.2",
     "astro": "^7.3.5",
