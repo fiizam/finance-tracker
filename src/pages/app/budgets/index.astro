@@ -1,0 +1,179 @@
+---
+import AppLayout from '../../../layouts/AppLayout.astro';
+import { db } from '../../../db';
+import { budgets, transactions, categories } from '../../../db/schema';
+import { eq, and, gte, lte } from 'drizzle-orm';
+import { formatIDR } from '../../../utils/currency';
+
+const userId = Astro.locals.userId;
+
+// Current month
+const now = new Date();
+const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+// User categories
+const userCategories = await db.select().from(categories).where(and(eq(categories.userId, userId), eq(categories.type, 'expense')));
+
+let error = '';
+if (Astro.request.method === 'POST') {
+  try {
+    const data = await Astro.request.formData();
+    const categoryId = data.get('categoryId')?.toString();
+    const amountStr = data.get('amount')?.toString() || '0';
+    const amount = parseInt(amountStr.replace(/\./g, ''), 10);
+    
+    if (categoryId && amount > 0) {
+      // Upsert budget
+      const existing = await db.select().from(budgets).where(
+        and(
+          eq(budgets.userId, userId), 
+          eq(budgets.categoryId, categoryId),
+          eq(budgets.month, currentMonthStr)
+        )
+      ).limit(1);
+
+      if (existing.length > 0) {
+        await db.update(budgets)
+          .set({ amount })
+          .where(eq(budgets.id, existing[0].id));
+      } else {
+        await db.insert(budgets).values({
+          userId,
+          categoryId,
+          amount,
+          month: currentMonthStr,
+        });
+      }
+      return Astro.redirect('/app/budgets');
+    }
+  } catch (e) {
+    error = 'Failed to save budget.';
+  }
+}
+
+// Fetch budgets
+const currentBudgets = await db
+  .select({
+    id: budgets.id,
+    amount: budgets.amount,
+    categoryName: categories.name,
+    categoryId: categories.id,
+  })
+  .from(budgets)
+  .leftJoin(categories, eq(budgets.categoryId, categories.id))
+  .where(
+    and(
+      eq(budgets.userId, userId),
+      eq(budgets.month, currentMonthStr)
+    )
+  );
+
+// Fetch spending for budgeted categories
+const spendingData = await db
+  .select({
+    categoryId: transactions.categoryId,
+    amount: transactions.amount,
+  })
+  .from(transactions)
+  .where(
+    and(
+      eq(transactions.userId, userId),
+      eq(transactions.type, 'expense'),
+      gte(transactions.date, startOfMonth),
+      lte(transactions.date, endOfMonth)
+    )
+  );
+
+const spendingByCat: Record<string, number> = {};
+spendingData.forEach(tx => {
+  if (tx.categoryId) {
+    if (!spendingByCat[tx.categoryId]) spendingByCat[tx.categoryId] = 0;
+    spendingByCat[tx.categoryId] += tx.amount;
+  }
+});
+
+const budgetView = currentBudgets.map(b => {
+  const spent = spendingByCat[b.categoryId!] || 0;
+  const percent = Math.min((spent / b.amount) * 100, 100);
+  const isExceeded = spent > b.amount;
+  return { ...b, spent, percent, isExceeded };
+});
+---
+
+<AppLayout title="Budgets">
+  <div class="mb-8">
+    <h2 class="text-2xl font-display font-medium tracking-tight mb-2">Budgets</h2>
+    <p class="text-sm text-text-muted">Set limits and track your monthly spending.</p>
+  </div>
+
+  {error && (
+    <div class="bg-red-50 text-red-700 p-3 rounded-md text-sm border border-red-100 mb-6">
+      {error}
+    </div>
+  )}
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+    <!-- Budget List -->
+    <section class="lg:col-span-2 space-y-6">
+      {budgetView.length === 0 ? (
+        <div class="py-12 text-center border border-border border-dashed rounded-lg">
+          <p class="text-text-muted text-sm">No budgets set for this month.</p>
+        </div>
+      ) : (
+        budgetView.map(b => (
+          <div class="bg-surface border border-border rounded-lg p-5 shadow-sm transition-colors hover:border-text-muted/30">
+            <div class="flex justify-between items-baseline mb-2">
+              <h3 class="font-medium text-text-main">{b.categoryName}</h3>
+              <p class="text-sm">
+                <span class:list={["font-medium", b.isExceeded ? "text-red-600" : "text-text-main"]}>
+                  {formatIDR(b.spent)}
+                </span>
+                <span class="text-text-muted mx-1">/</span>
+                <span class="text-text-muted">{formatIDR(b.amount)}</span>
+              </p>
+            </div>
+            <div class="w-full h-2 bg-surface-hover rounded-full overflow-hidden">
+              <div 
+                class:list={[
+                  "h-full transition-all duration-1000 ease-out",
+                  b.isExceeded ? "bg-red-500" : (b.percent > 85 ? "bg-orange-400" : "bg-accent")
+                ]} 
+                style={`width: ${b.percent}%`}
+              ></div>
+            </div>
+            {b.isExceeded && (
+              <p class="text-xs text-red-600 mt-2 font-medium">Budget exceeded by {formatIDR(b.spent - b.amount)}</p>
+            )}
+          </div>
+        ))
+      )}
+    </section>
+
+    <!-- Add Budget Form -->
+    <section>
+      <div class="bg-surface border border-border border-dashed rounded-lg p-6 shadow-sm">
+        <h3 class="text-sm font-medium text-text-main mb-4">Set Budget</h3>
+        <form method="POST" class="space-y-4">
+          <div class="space-y-1.5">
+            <label for="categoryId" class="block text-xs font-medium text-text-muted">Category</label>
+            <select name="categoryId" id="categoryId" required class="w-full px-3 py-2 bg-transparent border border-border rounded-md text-sm">
+              {userCategories.map(c => (
+                <option value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+          <div class="space-y-1.5">
+            <label for="amount" class="block text-xs font-medium text-text-muted">Monthly Limit (Rp)</label>
+            <input type="text" inputmode="numeric" name="amount" id="amount" placeholder="e.g. 2.000.000" required class="format-idr-input w-full px-3 py-2 bg-transparent border border-border rounded-md text-sm" />
+          </div>
+          <button type="submit" class="w-full bg-surface-hover text-text-main px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-border">
+            Save Budget
+          </button>
+        </form>
+      </div>
+    </section>
+  </div>
+</AppLayout>

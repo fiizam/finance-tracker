@@ -1,0 +1,51 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'Personal finance companion.' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>{title}</title>
+  </head>
+  <body class="bg-background text-text-main antialiased min-h-screen page-transition">
+    <slot />
+    
+    <script>
+      // Automatically format inputs with the class 'format-idr-input'
+      document.addEventListener('input', (e) => {
+        const target = e.target as HTMLInputElement;
+        if (target && target.classList && target.classList.contains('format-idr-input')) {
+          // Store cursor position to restore it after formatting
+          const cursorPosition = target.selectionStart || 0;
+          const oldLength = target.value.length;
+          
+          let val = target.value.replace(/\D/g, '');
+          if (val) {
+            target.value = new Intl.NumberFormat('id-ID').format(parseInt(val, 10));
+          } else {
+            target.value = '';
+          }
+          
+          // Adjust cursor position based on added/removed periods
+          const newLength = target.value.length;
+          const diff = newLength - oldLength;
+          const newPosition = Math.max(0, cursorPosition + diff);
+          target.setSelectionRange(newPosition, newPosition);
+        }
+      });
+    </script>
+  </body>
+</html>

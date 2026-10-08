@@ -1,0 +1,68 @@
+---
+import { 
+  House, 
+  List, 
+  Wallet, 
+  ChartLineUp, 
+  Target, 
+  Gear 
+} from 'phosphor-svelte';
+
+const currentPath = Astro.url.pathname;
+
+const links = [
+  { name: 'Overview', href: '/app', icon: House },
+  { name: 'Transactions', href: '/app/transactions', icon: List },
+  { name: 'Accounts', href: '/app/accounts', icon: Wallet },
+  { name: 'Insights', href: '/app/insights', icon: ChartLineUp },
+  { name: 'Budgets', href: '/app/budgets', icon: Target },
+];
+---
+
+<div class="flex flex-col h-full py-6">
+  <div class="px-8 mb-8">
+    <div class="flex items-center gap-2">
+      <div class="w-6 h-6 rounded-sm bg-accent flex items-center justify-center">
+        <span class="text-white font-display font-semibold text-xs leading-none tracking-tight">F</span>
+      </div>
+      <span class="font-display font-semibold text-lg tracking-tight">Finance</span>
+    </div>
+  </div>
+
+  <nav class="flex-1 px-4 space-y-1">
+    {links.map((link) => {
+      const isActive = currentPath === link.href || (link.href !== '/app' && currentPath.startsWith(link.href));
+      const Icon = link.icon;
+      
+      return (
+        <a 
+          href={link.href} 
+          class:list={[
+            "flex items-center gap-3 px-4 py-2.5 rounded-md transition-colors duration-200 text-sm font-medium",
+            isActive 
+              ? "bg-surface-hover text-text-main" 
+              : "text-text-muted hover:text-text-main hover:bg-surface-hover/50"
+          ]}
+        >
+          <Icon size={20} weight={isActive ? "fill" : "regular"} class={isActive ? "text-accent" : ""} />
+          {link.name}
+        </a>
+      )
+    })}
+  </nav>
+
+  <div class="px-4 mt-auto">
+    <a 
+      href="/app/settings" 
+      class:list={[
+        "flex items-center gap-3 px-4 py-2.5 rounded-md transition-colors duration-200 text-sm font-medium",
+        currentPath.startsWith('/app/settings') 
+          ? "bg-surface-hover text-text-main" 
+          : "text-text-muted hover:text-text-main hover:bg-surface-hover/50"
+      ]}
+    >
+      <Gear size={20} weight={currentPath.startsWith('/app/settings') ? "fill" : "regular"} />
+      Settings
+    </a>
+  </div>
+</div>

@@ -1,0 +1,165 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { db } from '../db';
+import { users } from '../db/schema';
+import { eq } from 'drizzle-orm';
+import bcrypt from 'bcryptjs';
+import { createSessionToken } from '../utils/auth';
+
+let error = '';
+
+if (Astro.request.method === 'POST') {
+  try {
+    const data = await Astro.request.formData();
+    const action = data.get('action')?.toString();
+
+    if (action === 'demo_login') {
+      const userResult = await db.select().from(users).where(eq(users.email, 'demo@example.com')).limit(1);
+      if (userResult.length > 0) {
+        const token = await createSessionToken(userResult[0].id);
+        Astro.cookies.set('session', token, { path: '/', httpOnly: true, sameSite: 'lax', secure: import.meta.env.PROD });
+        return Astro.redirect('/app');
+      } else {
+        error = 'Demo account not found. Please run the setup script.';
+      }
+    } else {
+      const email = data.get('email')?.toString();
+      const password = data.get('password')?.toString();
+
+      if (!email || !password) {
+        error = 'Please provide both email and password.';
+    } else {
+      const userResult = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      const user = userResult[0];
+
+      if (!user) {
+        error = 'Invalid credentials.';
+      } else {
+        const isValid = await bcrypt.compare(password, user.passwordHash);
+        if (!isValid) {
+          error = 'Invalid credentials.';
+        } else if (!user.isVerified && user.email !== 'demo@example.com') {
+          // You could also generate and send a new OTP here if you wanted.
+          return Astro.redirect('/verify?email=' + encodeURIComponent(user.email));
+        } else {
+          const token = await createSessionToken(user.id);
+          Astro.cookies.set('session', token, { path: '/', httpOnly: true, sameSite: 'lax', secure: import.meta.env.PROD });
+          return Astro.redirect('/app');
+        }
+      }
+      }
+    }
+  } catch (e: any) {
+    console.error('Login error:', e);
+    error = 'Something went wrong. Please try again. ' + (e.message || '');
+  }
+}
+---
+
+<Layout title="Sign In">
+  <main class="min-h-screen flex flex-col items-center justify-center px-6 page-transition">
+    <div class="w-full max-w-sm">
+      <div class="mb-12">
+        <div class="w-10 h-10 rounded-sm bg-accent flex items-center justify-center mb-6">
+          <span class="text-white font-display font-semibold text-lg leading-none tracking-tight">F</span>
+        </div>
+        <h1 class="text-3xl font-display font-medium text-text-main mb-2 tracking-tight">Welcome back</h1>
+        <p class="text-text-muted text-sm">Enter your details to access your journal.</p>
+      </div>
+
+      <form method="POST" class="space-y-6">
+        {error && (
+          <div class="bg-red-50 text-red-700 p-3 rounded-md text-sm border border-red-100">
+            {error}
+          </div>
+        )}
+        
+        <div class="space-y-4">
+          <div class="space-y-1.5">
+            <label for="email" class="block text-sm font-medium text-text-main">Email</label>
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              required 
+              class="w-full px-3 py-2 bg-transparent border border-border rounded-md focus:outline-none focus:border-text-main focus:ring-1 focus:ring-text-main transition-colors text-sm"
+            />
+          </div>
+          
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between">
+              <label for="password" class="block text-sm font-medium text-text-main">Password</label>
+              <a href="/forgot-password" class="text-xs text-text-muted hover:text-text-main transition-colors">Forgot Password?</a>
+            </div>
+            <div class="relative">
+              <input 
+                type="password" 
+                id="password" 
+                name="password" 
+                required 
+                class="w-full pl-3 pr-10 py-2 bg-transparent border border-border rounded-md focus:outline-none focus:border-text-main focus:ring-1 focus:ring-text-main transition-colors text-sm"
+              />
+              <button type="button" class="absolute inset-y-0 right-0 flex items-center pr-3 text-text-muted hover:text-text-main" id="toggle-password">
+                <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.48c.35.79,8.82,19.58,27.65,38.41C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.35c18.83-18.83,27.3-37.62,27.65-38.41A8,8,0,0,0,247.31,124.76ZM128,192c-30.78,0-57.67-11.19-79.93-33.25A133.47,133.47,0,0,1,25,128,133.33,133.33,0,0,1,48.07,97.25C70.33,75.19,97.22,64,128,64s57.67,11.19,79.93,33.25A133.46,133.46,0,0,1,231.05,128C223.84,141.46,192.43,192,128,192Zm0-112a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Z"></path></svg>
+                <svg id="eye-slash-icon" class="hidden" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M53.92,34.62A8,8,0,1,0,42.08,45.38l28.07,32.08a130.49,130.49,0,0,0-33.81,40.8,8,8,0,0,0,0,6.48c.35.79,8.82,19.58,27.65,38.41C89.07,188.24,117.84,200,149.33,200a112.52,112.52,0,0,0,32.32-4.6l32.27,36.88a8,8,0,1,0,12.08-10.76ZM149.33,184c-27.42,0-52.92-10-74-30.86A118.23,118.23,0,0,1,50.75,124.6a143.1,143.1,0,0,1,26.54-27l34.86,39.84a32.11,32.11,0,0,0,34.21,3.48l13.12,15C156.12,183.18,152.79,184,149.33,184Zm37.28-44.52a8,8,0,0,0-10.63,1.3l-13.4,15.31A47.88,47.88,0,0,1,114.73,99l-19.1-21.84A122.46,122.46,0,0,1,149.33,56c27.42,0,52.92,10,74,30.86A118.23,118.23,0,0,1,247.91,124.6a143.23,143.23,0,0,1-30.48,30.3A8,8,0,1,0,226.24,168a159.22,159.22,0,0,0,34-34.82,8,8,0,0,0,0-6.48c-.35-.79-8.82-19.58-27.65-38.41C207.59,63.16,178.82,51.4,149.33,51.4a112.67,112.67,0,0,0-43.26,8.51l-18.4-21A8,8,0,1,0,75.59,49.63l18.33,21a115.17,115.17,0,0,0-15.54,9.66,8,8,0,0,0,9.25,13.06,99.31,99.31,0,0,1,12.72-7.85l19.16,21.9a48.06,48.06,0,0,1,64.84,65.34l12.44,14.21a99.4,99.4,0,0,1,9.82-7ZM133.58,111.9l27.1,31A32,32,0,0,1,133.58,111.9Z"></path></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button 
+          type="submit" 
+          class="w-full bg-accent text-white rounded-md py-2.5 text-sm font-medium hover:bg-accent-hover transition-colors shadow-sm active:scale-[0.98]"
+        >
+          Sign In
+        </button>
+      </form>
+
+      <div class="relative flex items-center py-6">
+        <div class="flex-grow border-t border-border"></div>
+        <span class="flex-shrink-0 mx-4 text-text-muted text-xs">OR</span>
+        <div class="flex-grow border-t border-border"></div>
+      </div>
+
+      <form method="POST">
+        <input type="hidden" name="action" value="demo_login" />
+        <button 
+          type="submit" 
+          class="w-full bg-surface-hover text-text-main border border-border rounded-md py-2.5 text-sm font-medium hover:bg-border transition-colors shadow-sm active:scale-[0.98]"
+        >
+          Explore Demo Account
+        </button>
+      </form>
+
+      <div class="mt-8 text-center">
+        <p class="text-sm text-text-muted">
+          Don't have an account? <a href="/register" class="text-text-main font-medium hover:underline">Create one</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleBtn = document.getElementById('toggle-password');
+      const passwordInput = document.getElementById('password') as HTMLInputElement;
+      const eyeIcon = document.getElementById('eye-icon');
+      const eyeSlashIcon = document.getElementById('eye-slash-icon');
+      
+      if (toggleBtn && passwordInput) {
+        toggleBtn.addEventListener('click', () => {
+          const isPassword = passwordInput.getAttribute('type') === 'password';
+          passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+          
+          if (isPassword) {
+            eyeIcon?.classList.add('hidden');
+            eyeSlashIcon?.classList.remove('hidden');
+          } else {
+            eyeIcon?.classList.remove('hidden');
+            eyeSlashIcon?.classList.add('hidden');
+          }
+        });
+      }
+    });
+  </script>
+</Layout>

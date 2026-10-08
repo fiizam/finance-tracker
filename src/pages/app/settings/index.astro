@@ -1,0 +1,94 @@
+---
+import AppLayout from '../../../layouts/AppLayout.astro';
+import { db } from '../../../db';
+import { categories, users } from '../../../db/schema';
+import { eq } from 'drizzle-orm';
+import { SignOut, Tag, User } from 'phosphor-svelte';
+
+const userId = Astro.locals.userId;
+
+if (Astro.request.method === 'POST') {
+  const data = await Astro.request.formData();
+  const action = data.get('action')?.toString();
+
+  if (action === 'logout') {
+    Astro.cookies.delete('session', { path: '/' });
+    return Astro.redirect('/login');
+  } else if (action === 'addCategory') {
+    const name = data.get('name')?.toString();
+    const type = data.get('type')?.toString();
+    
+    if (name && type) {
+      await db.insert(categories).values({ userId, name, type });
+      return Astro.redirect('/app/settings');
+    }
+  }
+}
+
+const userCategories = await db.select().from(categories).where(eq(categories.userId, userId));
+const currentUser = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+---
+
+<AppLayout title="Settings">
+  <div class="mb-8">
+    <h2 class="text-2xl font-display font-medium tracking-tight mb-2">Settings</h2>
+    <p class="text-sm text-text-muted">Manage your profile and preferences.</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+    <!-- Profile & Account -->
+    <section class="space-y-6">
+      <h3 class="text-sm font-medium text-text-muted border-b border-border pb-2">Profile</h3>
+      
+      <div class="bg-surface border border-border rounded-lg p-5 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-full bg-surface-hover flex items-center justify-center text-text-muted">
+            <User size={24} />
+          </div>
+          <div>
+            <p class="font-medium text-text-main">{currentUser[0]?.name || 'User'}</p>
+            <p class="text-sm text-text-muted">{currentUser[0]?.email || ''}</p>
+          </div>
+        </div>
+      </div>
+
+      <form method="POST">
+        <input type="hidden" name="action" value="logout" />
+        <button type="submit" class="flex items-center gap-2 text-red-600 hover:text-red-700 text-sm font-medium px-2 py-1 transition-colors">
+          <SignOut size={18} /> Sign Out
+        </button>
+      </form>
+    </section>
+
+    <!-- Categories -->
+    <section class="space-y-6">
+      <h3 class="text-sm font-medium text-text-muted border-b border-border pb-2">Categories</h3>
+      
+      <div class="bg-surface border border-border rounded-lg p-5 shadow-sm space-y-4">
+        <div class="space-y-2 max-h-60 overflow-y-auto">
+          {userCategories.map(cat => (
+            <div class="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
+              <div class="flex items-center gap-2">
+                <Tag size={16} class="text-text-muted" />
+                <span class="text-sm text-text-main">{cat.name}</span>
+              </div>
+              <span class="text-[10px] uppercase tracking-wider text-text-muted">{cat.type}</span>
+            </div>
+          ))}
+        </div>
+
+        <form method="POST" class="pt-4 border-t border-border mt-4 flex gap-2">
+          <input type="hidden" name="action" value="addCategory" />
+          <input type="text" name="name" placeholder="New category..." required class="flex-1 px-3 py-1.5 bg-transparent border border-border rounded-md text-sm" />
+          <select name="type" required class="px-2 py-1.5 bg-transparent border border-border rounded-md text-sm">
+            <option value="expense">Expense</option>
+            <option value="income">Income</option>
+          </select>
+          <button type="submit" class="bg-surface-hover text-text-main px-3 py-1.5 rounded-md text-sm font-medium transition-colors hover:bg-border">
+            Add
+          </button>
+        </form>
+      </div>
+    </section>
+  </div>
+</AppLayout>

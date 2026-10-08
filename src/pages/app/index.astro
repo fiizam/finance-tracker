@@ -1,0 +1,194 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+import { db } from '../../db';
+import { accounts, transactions } from '../../db/schema';
+import { eq, desc, and, gte } from 'drizzle-orm';
+import { formatIDR } from '../../utils/currency';
+import { Wallet, TrendUp, TrendDown, ChartLineUp, ArrowRight, DotsThree, ArrowsLeftRight } from 'phosphor-svelte';
+
+const userId = Astro.locals.userId;
+
+// Fetch accounts
+const userAccounts = await db.select().from(accounts).where(eq(accounts.userId, userId));
+const totalBalance = userAccounts.reduce((sum, acc) => sum + acc.balance, 0);
+
+// Current month calculations
+const startOfMonth = new Date();
+startOfMonth.setDate(1);
+startOfMonth.setHours(0, 0, 0, 0);
+
+const recentTx = await db
+  .select()
+  .from(transactions)
+  .where(eq(transactions.userId, userId))
+  .orderBy(desc(transactions.date))
+  .limit(5);
+
+const monthTx = await db
+  .select()
+  .from(transactions)
+  .where(
+    and(
+      eq(transactions.userId, userId),
+      gte(transactions.date, startOfMonth)
+    )
+  );
+
+let monthlyIncome = 0;
+let monthlyExpense = 0;
+
+monthTx.forEach(tx => {
+  if (tx.type === 'income') monthlyIncome += tx.amount;
+  if (tx.type === 'expense') monthlyExpense += tx.amount;
+});
+
+const netCashFlow = monthlyIncome - monthlyExpense;
+---
+
+<AppLayout title="Overview">
+  <div class="space-y-6 max-w-6xl mx-auto">
+    
+    <!-- Bento Grid Top Section -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Total Balance Card -->
+      <div class="md:col-span-3 bg-gradient-to-br from-surface to-surface-hover border border-border p-8 rounded-2xl animate-fade-in-up" style="animation-delay: 0ms;">
+        <p class="text-sm text-text-muted mb-3 flex items-center gap-2">
+          <Wallet size={18} weight="duotone" /> 
+          Total Balance
+        </p>
+        <h2 class="text-5xl md:text-6xl font-display font-medium tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-text-main to-text-muted">
+          {formatIDR(totalBalance)}
+        </h2>
+      </div>
+
+      <!-- Cash Flow -->
+      <div class="bg-surface border border-border p-6 rounded-2xl animate-fade-in-up relative overflow-hidden group hover:border-blue-200 transition-all duration-300 cursor-default shadow-sm hover:shadow-md" style="animation-delay: 100ms;">
+        <!-- Glowing background blob -->
+        <div class="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-colors duration-500"></div>
+        
+        <div class="relative z-10">
+          <div class="flex items-center gap-2.5 mb-3">
+            <div class="p-1.5 rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100 group-hover:bg-blue-500 group-hover:text-white transition-all duration-300 shadow-sm group-hover:rotate-3 group-hover:scale-110">
+              <ChartLineUp size={16} weight="bold" />
+            </div>
+            <p class="text-xs font-bold text-text-muted uppercase tracking-wider">Net Cash Flow</p>
+          </div>
+          <p class:list={["text-3xl font-display font-medium tracking-tight mt-1", netCashFlow >= 0 ? "text-text-main" : "text-red-600"]}>
+            {netCashFlow > 0 ? '+' : ''}{formatIDR(netCashFlow)}
+          </p>
+        </div>
+      </div>
+
+      <!-- Income -->
+      <div class="bg-surface border border-border p-6 rounded-2xl animate-fade-in-up relative overflow-hidden group hover:border-emerald-200 transition-all duration-300 cursor-default shadow-sm hover:shadow-md" style="animation-delay: 150ms;">
+        <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-colors duration-500"></div>
+        
+        <div class="relative z-10">
+          <div class="flex items-center gap-2.5 mb-3">
+            <div class="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300 shadow-sm group-hover:-rotate-3 group-hover:scale-110">
+              <TrendUp size={16} weight="bold" />
+            </div>
+            <p class="text-xs font-bold text-text-muted uppercase tracking-wider">Income</p>
+          </div>
+          <p class="text-3xl font-display font-medium tracking-tight text-text-main mt-1">{formatIDR(monthlyIncome)}</p>
+        </div>
+      </div>
+
+      <!-- Expenses -->
+      <div class="bg-surface border border-border p-6 rounded-2xl animate-fade-in-up relative overflow-hidden group hover:border-rose-200 transition-all duration-300 cursor-default shadow-sm hover:shadow-md" style="animation-delay: 200ms;">
+        <div class="absolute -right-6 -top-6 w-24 h-24 bg-rose-500/10 rounded-full blur-2xl group-hover:bg-rose-500/20 transition-colors duration-500"></div>
+        
+        <div class="relative z-10">
+          <div class="flex items-center gap-2.5 mb-3">
+            <div class="p-1.5 rounded-lg bg-rose-50 text-rose-600 ring-1 ring-rose-100 group-hover:bg-rose-500 group-hover:text-white transition-all duration-300 shadow-sm group-hover:rotate-3 group-hover:scale-110">
+              <TrendDown size={16} weight="bold" />
+            </div>
+            <p class="text-xs font-bold text-text-muted uppercase tracking-wider">Expenses</p>
+          </div>
+          <p class="text-3xl font-display font-medium tracking-tight text-text-main mt-1">{formatIDR(monthlyExpense)}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom Section Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Recent Transactions -->
+      <section class="lg:col-span-2 bg-surface border border-border rounded-2xl p-6 animate-fade-in-up" style="animation-delay: 300ms;">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-lg font-display font-medium">Recent Transactions</h3>
+          <a href="/app/transactions" class="text-sm text-accent hover:text-accent-hover font-medium flex items-center gap-1">
+            View all <ArrowRight size={14} />
+          </a>
+        </div>
+        
+        {recentTx.length === 0 ? (
+          <div class="py-12 text-center border border-border border-dashed rounded-xl">
+            <p class="text-text-muted text-sm mb-4">No transactions yet.</p>
+            <a href="/app/transactions/new" class="inline-block bg-accent text-white px-5 py-2.5 rounded-md text-sm font-medium hover:bg-accent-hover transition-colors shadow-sm">
+              Add Transaction
+            </a>
+          </div>
+        ) : (
+          <div class="space-y-2">
+            {recentTx.map(tx => (
+              <div class="flex items-center justify-between p-3 -mx-3 hover:bg-surface-hover rounded-lg transition-colors group">
+                <div class="flex items-center gap-4">
+                  <div class:list={[
+                    "w-11 h-11 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110",
+                    tx.type === 'expense' ? "bg-red-50 text-red-600" : 
+                    tx.type === 'income' ? "bg-green-50 text-green-600" : 
+                    "bg-slate-100 text-slate-600"
+                  ]}>
+                    {tx.type === 'expense' ? <TrendDown size={22} weight="duotone" /> : 
+                     tx.type === 'income' ? <TrendUp size={22} weight="duotone" /> : 
+                     <ArrowsLeftRight size={22} weight="duotone" />}
+                  </div>
+                  <div>
+                    <p class="text-sm font-medium text-text-main group-hover:text-accent transition-colors">{tx.description || 'Untitled'}</p>
+                    <p class="text-xs text-text-muted mt-0.5">{new Date(tx.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                  </div>
+                </div>
+                <div class:list={[
+                  "text-sm font-medium",
+                  tx.type === 'expense' ? "text-text-main" : tx.type === 'income' ? "text-green-600" : "text-text-muted"
+                ]}>
+                  {tx.type === 'expense' ? '-' : tx.type === 'income' ? '+' : ''}{formatIDR(tx.amount)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <!-- Accounts -->
+      <section class="bg-surface border border-border rounded-2xl p-6 animate-fade-in-up" style="animation-delay: 400ms;">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-lg font-display font-medium">Accounts</h3>
+          <a href="/app/accounts" class="text-text-muted hover:text-accent p-1">
+            <DotsThree size={20} weight="bold" />
+          </a>
+        </div>
+
+        {userAccounts.length === 0 ? (
+          <div class="py-8 text-center border border-border border-dashed rounded-xl">
+            <p class="text-sm text-text-muted">No accounts.</p>
+          </div>
+        ) : (
+          <div class="space-y-4">
+            {userAccounts.map(acc => (
+              <div class="flex justify-between items-center p-3 -mx-3 hover:bg-surface-hover rounded-lg transition-colors">
+                <div>
+                  <p class="text-sm font-medium text-text-main">{acc.name}</p>
+                  <p class="text-xs text-text-muted mt-0.5 capitalize">{acc.type.replace('_', ' ')}</p>
+                </div>
+                <p class="text-sm font-medium text-text-main">{formatIDR(acc.balance)}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+      
+    </div>
+  </div>
+</AppLayout>

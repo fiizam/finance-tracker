@@ -1,0 +1,155 @@
+---
+import AppLayout from '../../../../layouts/AppLayout.astro';
+import AddTransactionForm from '../../../../components/AddTransactionForm.svelte';
+import { db } from '../../../../db';
+import { accounts, categories, transactions, users } from '../../../../db/schema';
+import { eq, and, sql } from 'drizzle-orm';
+
+const { id } = Astro.params;
+const userId = Astro.locals.userId;
+
+if (!id) return Astro.redirect('/app/transactions');
+
+// Fetch existing transaction
+const txResult = await db
+  .select({
+    id: transactions.id,
+    type: transactions.type,
+    amount: transactions.amount,
+    date: transactions.date,
+    description: transactions.description,
+    accountId: transactions.accountId,
+    toAccountId: transactions.toAccountId,
+    categoryId: transactions.categoryId,
+    categoryName: categories.name,
+  })
+  .from(transactions)
+  .leftJoin(categories, eq(transactions.categoryId, categories.id))
+  .where(and(eq(transactions.id, id), eq(transactions.userId, userId)))
+  .limit(1);
+
+if (txResult.length === 0) {
+  return Astro.redirect('/app/transactions');
+}
+
+const existingTx = txResult[0];
+let error = '';
+
+const currentUser = await db.select({ email: users.email }).from(users).where(eq(users.id, userId)).limit(1);
+const isDemo = currentUser[0]?.email === 'demo@example.com';
+
+if (Astro.request.method === 'POST') {
+  try {
+    if (isDemo) {
+      error = 'Tindakan ini diblokir pada akun Demo untuk mencegah kerusakan data.';
+    } else {
+      const data = await Astro.request.formData();
+      const type = data.get('type')?.toString();
+      const amountStr = data.get('amount')?.toString();
+      const accountId = data.get('accountId')?.toString();
+      const toAccountId = data.get('toAccountId')?.toString();
+      const categoryName = data.get('categoryName')?.toString()?.trim();
+      const dateStr = data.get('date')?.toString();
+      const description = data.get('description')?.toString() || '';
+
+      if (!type || !amountStr || !accountId || !dateStr) {
+        error = 'Missing required fields.';
+      } else {
+        const amount = parseInt(amountStr.replace(/\./g, ''), 10);
+        const date = new Date(dateStr);
+
+        await db.transaction(async (tx) => {
+          // 1. Revert Old Balances
+          if (existingTx.type === 'expense') {
+            await tx.update(accounts).set({ balance: sql`${accounts.balance} + ${existingTx.amount}` }).where(eq(accounts.id, existingTx.accountId));
+          } else if (existingTx.type === 'income') {
+            await tx.update(accounts).set({ balance: sql`${accounts.balance} - ${existingTx.amount}` }).where(eq(accounts.id, existingTx.accountId));
+          } else if (existingTx.type === 'transfer' && existingTx.toAccountId) {
+            await tx.update(accounts).set({ balance: sql`${accounts.balance} + ${existingTx.amount}` }).where(eq(accounts.id, existingTx.accountId));
+            await tx.update(accounts).set({ balance: sql`${accounts.balance} - ${existingTx.amount}` }).where(eq(accounts.id, existingTx.toAccountId));
+          }
+
+          // 2. Resolve Category (Create if new)
+          let finalCategoryId = null;
+          if (type !== 'transfer' && categoryName) {
+            const existingCategory = await tx.select().from(categories).where(
+              and(
+                eq(categories.userId, userId),
+                eq(categories.type, type),
+                sql`LOWER(${categories.name}) = LOWER(${categoryName})`
+              )
+            ).limit(1);
+
+            if (existingCategory.length > 0) {
+              finalCategoryId = existingCategory[0].id;
+            } else {
+              const newCat = await tx.insert(categories).values({
+                userId,
+                name: categoryName,
+                type,
+              }).returning({ id: categories.id });
+              finalCategoryId = newCat[0].id;
+            }
+          }
+
+          // 3. Update Transaction
+          await tx.update(transactions).set({
+            type,
+            amount,
+            accountId,
+            toAccountId: type === 'transfer' ? toAccountId : null,
+            categoryId: finalCategoryId,
+            date,
+            description,
+          }).where(eq(transactions.id, existingTx.id));
+
+          // 4. Apply New Balances
+          if (type === 'expense') {
+            await tx.update(accounts).set({ balance: sql`${accounts.balance} - ${amount}` }).where(eq(accounts.id, accountId));
+          } else if (type === 'income') {
+            await tx.update(accounts).set({ balance: sql`${accounts.balance} + ${amount}` }).where(eq(accounts.id, accountId));
+          } else if (type === 'transfer') {
+            if (!toAccountId) throw new Error('Missing destination account for transfer');
+            await tx.update(accounts).set({ balance: sql`${accounts.balance} - ${amount}` }).where(eq(accounts.id, accountId));
+            await tx.update(accounts).set({ balance: sql`${accounts.balance} + ${amount}` }).where(eq(accounts.id, toAccountId));
+          }
+        });
+
+        return Astro.redirect('/app/transactions');
+      }
+    }
+  } catch (e) {
+    console.error(e);
+    error = 'Failed to update transaction. Please check your inputs.';
+  }
+}
+
+// Fetch required data for the form
+const userAccounts = await db.select().from(accounts).where(eq(accounts.userId, userId));
+const userCategories = await db.select().from(categories).where(eq(categories.userId, userId));
+---
+
+<AppLayout title="Edit Transaction">
+  <div class="max-w-xl mx-auto">
+    <div class="mb-8">
+      <h2 class="text-2xl font-display font-medium tracking-tight mb-2">Edit Transaction</h2>
+      <p class="text-sm text-text-muted">Update your transaction details.</p>
+    </div>
+
+    {error && (
+      <div class="bg-red-50 text-red-700 p-3 rounded-md text-sm border border-red-100 mb-6">
+        {error}
+      </div>
+    )}
+
+    <div class="bg-surface rounded-lg md:border border-border md:p-6 shadow-sm">
+      <AddTransactionForm 
+        client:load 
+        accounts={userAccounts} 
+        categories={userCategories} 
+        initialData={existingTx}
+        actionUrl={`/app/transactions/edit/${id}`}
+      />
+    </div>
+  </div>
+</AppLayout>
