@@ -1,0 +1,16 @@
+{
+  "name": "Antigravity Finance",
+  "short_name": "Finance",
+  "start_url": "/app",
+  "display": "standalone",
+  "background_color": "#FAFAFA",
+  "theme_color": "#04471C",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
