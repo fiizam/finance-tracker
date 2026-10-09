@@ -159,12 +159,12 @@ const grouped = txData.reduce((acc, tx) => {
           <h3 class="text-sm font-medium text-text-muted mb-4 pb-2 border-b border-border">{dateStr}</h3>
           <div class="space-y-1">
             {grouped[dateStr].map(tx => (
-              <div class="flex items-center justify-between py-3 px-2 -mx-2 hover:bg-surface-hover rounded-md transition-colors group">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between py-4 sm:py-3 px-3 sm:px-2 sm:-mx-2 hover:bg-surface-hover rounded-xl sm:rounded-md transition-colors group gap-3 sm:gap-0 border border-border sm:border-transparent bg-surface sm:bg-transparent">
                 <div class="flex flex-col">
-                  <span class="text-sm font-medium text-text-main group-hover:text-accent transition-colors">
+                  <span class="text-sm font-medium text-text-main sm:group-hover:text-accent transition-colors">
                     {tx.description || 'Untitled Transaction'}
                   </span>
-                  <div class="flex items-center gap-2 mt-0.5">
+                  <div class="flex items-center gap-2 mt-1 sm:mt-0.5">
                     <span class="text-xs text-text-muted">{tx.accountName}</span>
                     {tx.categoryName && (
                       <>
@@ -174,35 +174,38 @@ const grouped = txData.reduce((acc, tx) => {
                     )}
                   </div>
                 </div>
-                <div class="flex items-center gap-4 text-right">
-                  <div>
+                
+                <div class="flex flex-row-reverse sm:flex-row items-center justify-between sm:justify-end gap-4">
+                  <div class="text-left sm:text-right">
                     <div class:list={[
                       "text-sm font-medium",
                       tx.type === 'expense' ? "text-text-main" : tx.type === 'income' ? "text-green-600" : "text-text-muted"
                     ]}>
                       {tx.type === 'expense' ? '-' : tx.type === 'income' ? '+' : ''}{formatIDR(tx.amount)}
                     </div>
-                    {tx.type === 'transfer' && <span class="text-[10px] text-text-muted uppercase tracking-wider">Transfer</span>}
+                    {tx.type === 'transfer' && <span class="text-[10px] text-text-muted uppercase tracking-wider block mt-0.5">Transfer</span>}
                   </div>
                   
-                  <div class="opacity-0 group-hover:opacity-100 transition-opacity relative flex justify-end items-center h-8 w-28 overflow-hidden">
+                  <!-- Actions Container: Always visible as a pill on mobile, fade-in on desktop -->
+                  <div class="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity relative flex justify-end items-center h-10 w-[120px] overflow-hidden">
                     <!-- Default State -->
-                    <div class="absolute right-0 flex items-center gap-1 transition-transform duration-300 ease-out translate-x-0" id={`default-${tx.id}`}>
-                      <a href={`/app/transactions/edit/${tx.id}`} class="text-text-muted hover:text-accent p-1" title="Edit Transaksi">
+                    <div class="absolute right-0 flex items-center gap-1 transition-transform duration-300 ease-out translate-x-0 bg-surface-hover sm:bg-transparent p-1 sm:p-0 rounded-lg sm:rounded-none border border-border sm:border-transparent" id={`default-${tx.id}`}>
+                      <a href={`/app/transactions/edit/${tx.id}`} class="text-text-muted hover:text-accent p-2 rounded-md hover:bg-surface transition-colors" title="Edit Transaksi">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l12.69-12.69,44.69,44.69Z"></path></svg>
                       </a>
-                      <button type="button" class="text-text-muted hover:text-red-500 p-1 btn-intent" data-id={tx.id} title="Hapus Transaksi">
+                      <div class="w-px h-4 bg-border hidden sm:block"></div>
+                      <button type="button" class="text-text-muted hover:text-red-500 p-2 rounded-md hover:bg-red-50 transition-colors btn-intent" data-id={tx.id} title="Hapus Transaksi">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg>
                       </button>
                     </div>
                     
                     <!-- Confirm State -->
-                    <div class="absolute right-0 flex items-center gap-2 transition-transform duration-300 ease-out translate-x-[120%]" id={`confirm-${tx.id}`}>
-                      <button type="button" class="text-[11px] font-medium text-text-muted hover:text-text-main btn-cancel" data-id={tx.id}>Batal</button>
+                    <div class="absolute right-0 flex items-center gap-2 transition-transform duration-300 ease-out translate-x-[120%] bg-surface-hover sm:bg-transparent p-1 sm:p-0 rounded-lg sm:rounded-none border border-border sm:border-transparent" id={`confirm-${tx.id}`}>
+                      <button type="button" class="text-[11px] font-medium text-text-muted hover:text-text-main px-3 py-2 rounded-md hover:bg-surface transition-colors btn-cancel" data-id={tx.id}>Batal</button>
                       <form method="POST" class="m-0 p-0 flex">
                         <input type="hidden" name="action" value="delete" />
                         <input type="hidden" name="txId" value={tx.id} />
-                        <button type="submit" class="text-[11px] font-medium text-white bg-red-500 hover:bg-red-600 px-2 py-1 rounded transition-colors shadow-sm active:scale-95">Hapus</button>
+                        <button type="submit" class="text-[11px] font-medium text-white bg-red-500 hover:bg-red-600 px-3 py-2 rounded-md transition-colors shadow-sm active:scale-95">Hapus</button>
                       </form>
                     </div>
                   </div>
