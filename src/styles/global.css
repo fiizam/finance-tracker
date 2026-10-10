@@ -68,18 +68,18 @@
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Premium Breathing Theme Transition */
+/* Premium Clean Sink Theme Transition */
 body {
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), 
-              filter 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
-              background-color 0.8s ease, 
-              color 0.8s ease;
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), 
+              opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.6s ease, 
+              color 0.6s ease;
   transform-origin: center top;
 }
 
 body.theme-transitioning {
-  transform: scale(0.96) translateY(10px);
-  filter: blur(12px) opacity(0.7);
+  transform: scale(0.985) translateY(4px);
+  opacity: 0.3;
   pointer-events: none;
 }
 

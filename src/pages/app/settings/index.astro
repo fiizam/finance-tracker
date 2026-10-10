@@ -277,7 +277,7 @@ const currentUser = await db.select().from(users).where(eq(users.id, userId)).li
         // Add the breathing effect class
         document.body.classList.add('theme-transitioning');
         
-        // Wait for the blur/scale to peak, then swap colors
+        // Wait for the opacity/scale to peak, then swap colors
         setTimeout(() => {
           if (isDarkNow) {
             document.documentElement.classList.remove('dark');
@@ -289,12 +289,10 @@ const currentUser = await db.select().from(users).where(eq(users.id, userId)).li
             updateUI(true);
           }
           
-          // Request animation frame ensures the browser applies the new colors
-          // before we remove the class to scale back up
           requestAnimationFrame(() => {
             document.body.classList.remove('theme-transitioning');
           });
-        }, 300); // Trigger swap at the exact middle of the 500ms transform
+        }, 200); // Trigger swap exactly halfway through the 400ms transition
       });
 
       // Dropdown logic
