@@ -159,8 +159,8 @@ const grouped = txData.reduce((acc, tx) => {
           <h3 class="text-sm font-medium text-text-muted mb-3 pb-2 border-b border-border">{dateStr}</h3>
           <div class="space-y-1">
             {grouped[dateStr].map(tx => (
-              <a href={`/app/transactions/edit/${tx.id}`} class="block py-3 px-3 -mx-3 hover:bg-surface-hover active:bg-surface-hover rounded-xl transition-colors">
-                <div class="flex items-center justify-between">
+              <div class="relative flex items-center justify-between py-3 px-3 -mx-3 hover:bg-surface-hover rounded-xl transition-colors group action-menu-container">
+                <div class="flex items-center justify-between w-full">
                   <div class="flex flex-col">
                     <span class="text-sm font-medium text-text-main">
                       {tx.description || 'Untitled Transaction'}
@@ -186,17 +186,80 @@ const grouped = txData.reduce((acc, tx) => {
                       </div>
                       {tx.type === 'transfer' && <span class="text-[10px] text-text-muted uppercase tracking-wider block mt-0.5">Transfer</span>}
                     </div>
-                    <!-- Chevron icon to indicate it's clickable -->
-                    <div class="text-border">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path></svg>
-                    </div>
+                    
+                    <!-- Action Toggle Button (3 dots) -->
+                    <button type="button" class="p-1.5 text-text-muted hover:text-text-main hover:bg-border rounded-md transition-colors btn-action-toggle" data-target={`menu-${tx.id}`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M140,128a12,12,0,1,1-12-12A12,12,0,0,1,140,128Zm44-12a12,12,0,1,0,12,12A12,12,0,0,0,184,116ZM72,116a12,12,0,1,0,12,12A12,12,0,0,0,72,116Z"></path></svg>
+                    </button>
                   </div>
                 </div>
-              </a>
+
+                <!-- Floating Animated Action Menu -->
+                <div id={`menu-${tx.id}`} class="absolute right-12 top-1/2 -translate-y-1/2 bg-surface border border-border shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] rounded-lg flex items-center p-1.5 gap-1 z-10 opacity-0 pointer-events-none scale-95 transition-all duration-200 origin-right">
+                  <a href={`/app/transactions/edit/${tx.id}`} class="flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium text-text-muted hover:text-text-main hover:bg-surface-hover rounded-md transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256"><path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l12.69-12.69,44.69,44.69Z"></path></svg>
+                    Edit
+                  </a>
+                  <div class="w-px h-4 bg-border mx-1"></div>
+                  <form method="POST" class="m-0" onsubmit="return confirm('Hapus transaksi ini secara permanen?')">
+                    <input type="hidden" name="action" value="delete" />
+                    <input type="hidden" name="txId" value={tx.id} />
+                    <button type="submit" class="flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg>
+                      Hapus
+                    </button>
+                  </form>
+                </div>
+              </div>
             ))}
           </div>
         </section>
       ))
     )}
   </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggles = document.querySelectorAll('.btn-action-toggle');
+      let activeMenu: HTMLElement | null = null;
+
+      toggles.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const targetId = (btn as HTMLElement).getAttribute('data-target');
+          if (!targetId) return;
+          const menu = document.getElementById(targetId);
+          
+          // Close currently active menu if it's different
+          if (activeMenu && activeMenu !== menu) {
+            activeMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+            activeMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+          }
+
+          if (menu) {
+            const isOpen = menu.classList.contains('opacity-100');
+            if (isOpen) {
+              menu.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+              menu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+              activeMenu = null;
+            } else {
+              menu.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
+              menu.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
+              activeMenu = menu;
+            }
+          }
+        });
+      });
+
+      // Close menu when clicking outside
+      document.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (activeMenu && !target.closest('.action-menu-container')) {
+          activeMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+          activeMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+          activeMenu = null;
+        }
+      });
+    });
+  </script>
 </AppLayout>
