@@ -102,9 +102,8 @@ const currentUser = await db.select().from(users).where(eq(users.id, userId)).li
             </div>
           </button>
           
-          <form method="POST" class="m-0 p-0 w-full" id="currency-form">
-            <input type="hidden" name="action" value="setCurrency" />
-            <button type="button" class="w-full flex items-center justify-between p-4 sm:px-6 sm:py-5 hover:bg-surface-hover transition-colors group relative">
+          <div class="relative w-full action-menu-container">
+            <button type="button" class="w-full flex items-center justify-between p-4 sm:px-6 sm:py-5 hover:bg-surface-hover transition-colors group btn-action-toggle" data-target="currency-menu">
               <div class="flex items-center gap-4">
                 <div class="w-10 h-10 rounded-xl bg-surface-hover flex items-center justify-center text-text-main group-hover:scale-110 transition-transform">
                   <CurrencyCircleDollar size={20} />
@@ -114,14 +113,27 @@ const currentUser = await db.select().from(users).where(eq(users.id, userId)).li
                   <p class="text-xs text-text-muted mt-0.5">Change your default currency</p>
                 </div>
               </div>
-              <select name="currency" onchange="document.getElementById('currency-form').submit()" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full text-transparent">
-                <option value="IDR" selected={userCurrency === 'IDR'}>IDR (Rp)</option>
-                <option value="USD" selected={userCurrency === 'USD'}>USD ($)</option>
-                <option value="EUR" selected={userCurrency === 'EUR'}>EUR (€)</option>
-              </select>
-              <span class="text-sm font-medium text-text-muted bg-surface-hover px-2 py-1 rounded border border-border pointer-events-none">{userCurrency}</span>
+              <span class="text-sm font-medium text-text-muted bg-surface-hover px-2 py-1 rounded border border-border">{userCurrency}</span>
             </button>
-          </form>
+            
+            <!-- Floating Custom Dropdown -->
+            <div id="currency-menu" class="absolute right-6 top-16 bg-surface border border-border shadow-[0_10px_30px_-5px_rgba(0,0,0,0.15)] rounded-xl flex flex-col p-1.5 gap-1 z-20 opacity-0 pointer-events-none scale-95 transition-all duration-200 origin-top-right min-w-[150px]">
+              {['IDR', 'USD', 'EUR'].map((curr) => (
+                <form method="POST" class="m-0">
+                  <input type="hidden" name="action" value="setCurrency" />
+                  <input type="hidden" name="currency" value={curr} />
+                  <button type="submit" class="w-full flex items-center justify-between px-3 py-2 text-sm font-medium rounded-lg transition-colors hover:bg-surface-hover">
+                    <span class={userCurrency === curr ? "text-text-main" : "text-text-muted"}>
+                      {curr === 'IDR' ? 'IDR (Rp)' : curr === 'USD' ? 'USD ($)' : 'EUR (€)'}
+                    </span>
+                    {userCurrency === curr && (
+                      <div class="w-1.5 h-1.5 rounded-full bg-accent"></div>
+                    )}
+                  </button>
+                </form>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -253,6 +265,47 @@ const currentUser = await db.select().from(users).where(eq(users.id, userId)).li
           document.documentElement.classList.add('dark');
           localStorage.setItem('theme', 'dark');
           updateUI(true);
+        }
+      });
+
+      // Dropdown logic
+      const toggles = document.querySelectorAll('.btn-action-toggle');
+      let activeMenu: HTMLElement | null = null;
+
+      toggles.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const targetId = (btn as HTMLElement).getAttribute('data-target');
+          if (!targetId) return;
+          const menu = document.getElementById(targetId);
+          
+          if (activeMenu && activeMenu !== menu) {
+            activeMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+            activeMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+          }
+
+          if (menu) {
+            const isOpen = menu.classList.contains('opacity-100');
+            if (isOpen) {
+              menu.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+              menu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+              activeMenu = null;
+            } else {
+              menu.classList.remove('opacity-0', 'pointer-events-none', 'scale-95');
+              menu.classList.add('opacity-100', 'pointer-events-auto', 'scale-100');
+              activeMenu = menu;
+            }
+          }
+        });
+      });
+
+      document.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (activeMenu && !target.closest('.action-menu-container')) {
+          activeMenu.classList.add('opacity-0', 'pointer-events-none', 'scale-95');
+          activeMenu.classList.remove('opacity-100', 'pointer-events-auto', 'scale-100');
+          activeMenu = null;
         }
       });
     });
