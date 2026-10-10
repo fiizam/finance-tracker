@@ -68,19 +68,23 @@
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Premium Clean Sink Theme Transition */
-body {
-  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), 
-              opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-              background-color 0.6s ease, 
-              color 0.6s ease;
-  transform-origin: center top;
+/* View Transitions API overrides for Dark Mode Circular Reveal */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
 }
-
-body.theme-transitioning {
-  transform: scale(0.985) translateY(4px);
-  opacity: 0.3;
-  pointer-events: none;
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+.dark::view-transition-old(root) {
+  z-index: 2;
+}
+.dark::view-transition-new(root) {
+  z-index: 1;
 }
 
 @keyframes fade-in {
