@@ -57,34 +57,30 @@
   }
 }
 
-/* Smooth transitions for interactive elements (excluding background color to allow View Transitions) */
+/* Smooth transitions for interactive elements */
 .bg-surface, 
 .bg-surface-hover, 
 .border-border,
 .bg-accent,
 .border-text-muted {
-  transition-property: border-color, box-shadow, transform;
-  transition-duration: 200ms;
+  transition-property: border-color, box-shadow, transform, background-color;
+  transition-duration: 400ms;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* View Transitions API overrides for Dark Mode Circular Reveal */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
+/* Premium Breathing Theme Transition */
+body {
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              filter 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+              background-color 0.8s ease, 
+              color 0.8s ease;
+  transform-origin: center top;
 }
-::view-transition-old(root) {
-  z-index: 1;
-}
-::view-transition-new(root) {
-  z-index: 2;
-}
-.dark::view-transition-old(root) {
-  z-index: 2;
-}
-.dark::view-transition-new(root) {
-  z-index: 1;
+
+body.theme-transitioning {
+  transform: scale(0.96) translateY(10px);
+  filter: blur(12px) opacity(0.7);
+  pointer-events: none;
 }
 
 @keyframes fade-in {
