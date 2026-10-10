@@ -171,10 +171,10 @@
         formnovalidate
         class="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
         on:click={(e) => {
-          if (!confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) e.preventDefault();
+          if (!confirm('Are you sure you want to delete this transaction?')) e.preventDefault();
         }}
       >
-        Hapus Transaksi
+        Delete Transaction
       </button>
     {/if}
     <button 
@@ -182,7 +182,7 @@
       disabled={isSubmitting}
       class="flex-1 bg-accent text-white rounded-md py-2.5 text-sm font-medium hover:bg-accent-hover transition-colors shadow-sm active:scale-[0.98] disabled:opacity-70"
     >
-      {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
+      {isSubmitting ? 'Saving...' : 'Save Changes'}
     </button>
   </div>
 </form>

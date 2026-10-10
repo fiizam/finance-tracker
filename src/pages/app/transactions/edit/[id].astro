@@ -41,7 +41,7 @@ const isDemo = currentUser[0]?.email === 'demo@example.com';
 if (Astro.request.method === 'POST') {
   try {
     if (isDemo) {
-      error = 'Tindakan ini diblokir pada akun Demo untuk mencegah kerusakan data.';
+      error = 'This action is blocked on the Demo account to prevent data corruption.';
     } else {
       const data = await Astro.request.formData();
       const action = data.get('action')?.toString();

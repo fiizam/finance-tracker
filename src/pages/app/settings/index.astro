@@ -1,8 +1,8 @@
 ---
 import AppLayout from '../../../layouts/AppLayout.astro';
 import { db } from '../../../db';
-import { categories, users } from '../../../db/schema';
-import { eq } from 'drizzle-orm';
+import { categories, users, transactions } from '../../../db/schema';
+import { eq, desc } from 'drizzle-orm';
 import { SignOut, Tag, User, Palette, CurrencyCircleDollar, DownloadSimple, Warning } from 'phosphor-svelte';
 
 const userId = Astro.locals.userId;
@@ -22,9 +22,38 @@ if (Astro.request.method === 'POST') {
       await db.insert(categories).values({ userId, name, type });
       return Astro.redirect('/app/settings');
     }
+  } else if (action === 'setCurrency') {
+    const currency = data.get('currency')?.toString();
+    if (currency) {
+      Astro.cookies.set('currency', currency, { path: '/' });
+      return Astro.redirect('/app/settings');
+    }
+  } else if (action === 'export') {
+    const allTx = await db.select({
+      date: transactions.date,
+      type: transactions.type,
+      amount: transactions.amount,
+      description: transactions.description,
+    }).from(transactions).where(eq(transactions.userId, userId)).orderBy(desc(transactions.date));
+    
+    let csv = 'Date,Type,Amount,Description\n';
+    allTx.forEach(t => {
+      const d = new Date(t.date).toISOString().split('T')[0];
+      const descText = t.description ? t.description.replace(/,/g, '') : '';
+      csv += `${d},${t.type},${t.amount},${descText}\n`;
+    });
+    
+    return new Response(csv, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/csv',
+        'Content-Disposition': 'attachment; filename="finance_transactions.csv"'
+      }
+    });
   }
 }
 
+const userCurrency = Astro.cookies.get('currency')?.value || 'IDR';
 const userCategories = await db.select().from(categories).where(eq(categories.userId, userId));
 const currentUser = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 ---
@@ -58,7 +87,7 @@ const currentUser = await db.select().from(users).where(eq(users.id, userId)).li
       <section>
         <h3 class="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 px-1">Preferences</h3>
         <div class="bg-surface border border-border rounded-2xl divide-y divide-border overflow-hidden shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)]">
-          <button type="button" class="w-full flex items-center justify-between p-4 sm:px-6 sm:py-5 hover:bg-surface-hover transition-colors group" onclick="alert('Dark mode toggle coming soon!')">
+          <button type="button" id="theme-toggle" class="w-full flex items-center justify-between p-4 sm:px-6 sm:py-5 hover:bg-surface-hover transition-colors group">
             <div class="flex items-center gap-4">
               <div class="w-10 h-10 rounded-xl bg-surface-hover flex items-center justify-center text-text-main group-hover:scale-110 transition-transform">
                 <Palette size={20} />
@@ -68,23 +97,31 @@ const currentUser = await db.select().from(users).where(eq(users.id, userId)).li
                 <p class="text-xs text-text-muted mt-0.5">Toggle light or dark theme</p>
               </div>
             </div>
-            <div class="w-10 h-6 bg-accent/20 rounded-full relative">
-              <div class="w-4 h-4 bg-accent rounded-full absolute top-1 left-1"></div>
+            <div class="w-10 h-6 bg-border rounded-full relative transition-colors duration-300" id="theme-track">
+              <div class="w-4 h-4 bg-surface rounded-full absolute top-1 left-1 transition-transform duration-300 shadow-sm" id="theme-thumb"></div>
             </div>
           </button>
           
-          <button type="button" class="w-full flex items-center justify-between p-4 sm:px-6 sm:py-5 hover:bg-surface-hover transition-colors group" onclick="alert('Currency settings coming soon!')">
-            <div class="flex items-center gap-4">
-              <div class="w-10 h-10 rounded-xl bg-surface-hover flex items-center justify-center text-text-main group-hover:scale-110 transition-transform">
-                <CurrencyCircleDollar size={20} />
+          <form method="POST" class="m-0 p-0 w-full" id="currency-form">
+            <input type="hidden" name="action" value="setCurrency" />
+            <button type="button" class="w-full flex items-center justify-between p-4 sm:px-6 sm:py-5 hover:bg-surface-hover transition-colors group relative">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-surface-hover flex items-center justify-center text-text-main group-hover:scale-110 transition-transform">
+                  <CurrencyCircleDollar size={20} />
+                </div>
+                <div class="text-left">
+                  <p class="text-sm font-medium text-text-main">Currency</p>
+                  <p class="text-xs text-text-muted mt-0.5">Change your default currency</p>
+                </div>
               </div>
-              <div class="text-left">
-                <p class="text-sm font-medium text-text-main">Currency</p>
-                <p class="text-xs text-text-muted mt-0.5">Change your default currency</p>
-              </div>
-            </div>
-            <span class="text-sm font-medium text-text-muted bg-surface-hover px-2 py-1 rounded">IDR (Rp)</span>
-          </button>
+              <select name="currency" onchange="document.getElementById('currency-form').submit()" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full text-transparent">
+                <option value="IDR" selected={userCurrency === 'IDR'}>IDR (Rp)</option>
+                <option value="USD" selected={userCurrency === 'USD'}>USD ($)</option>
+                <option value="EUR" selected={userCurrency === 'EUR'}>EUR (€)</option>
+              </select>
+              <span class="text-sm font-medium text-text-muted bg-surface-hover px-2 py-1 rounded border border-border pointer-events-none">{userCurrency}</span>
+            </button>
+          </form>
         </div>
       </section>
 
@@ -137,17 +174,20 @@ const currentUser = await db.select().from(users).where(eq(users.id, userId)).li
       <section>
         <h3 class="text-xs font-semibold text-red-500 uppercase tracking-wider mb-3 px-1">Danger Zone</h3>
         <div class="bg-surface border border-red-100 rounded-2xl divide-y divide-border overflow-hidden shadow-[0_2px_10px_-4px_rgba(255,0,0,0.05)]">
-          <button type="button" class="w-full flex items-center justify-between p-4 sm:px-6 sm:py-5 hover:bg-surface-hover transition-colors group" onclick="alert('Export data coming soon!')">
-            <div class="flex items-center gap-4">
-              <div class="w-10 h-10 rounded-xl bg-surface-hover flex items-center justify-center text-text-main group-hover:text-accent transition-colors">
-                <DownloadSimple size={20} />
+          <form method="POST" class="w-full m-0 p-0" onsubmit="return confirm('Download all your transactions?')">
+            <input type="hidden" name="action" value="export" />
+            <button type="submit" class="w-full flex items-center justify-between p-4 sm:px-6 sm:py-5 hover:bg-surface-hover transition-colors group">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-xl bg-surface-hover flex items-center justify-center text-text-main group-hover:text-accent transition-colors">
+                  <DownloadSimple size={20} />
+                </div>
+                <div class="text-left">
+                  <p class="text-sm font-medium text-text-main group-hover:text-accent transition-colors">Export Data</p>
+                  <p class="text-xs text-text-muted mt-0.5">Download all transactions as CSV</p>
+                </div>
               </div>
-              <div class="text-left">
-                <p class="text-sm font-medium text-text-main group-hover:text-accent transition-colors">Export Data</p>
-                <p class="text-xs text-text-muted mt-0.5">Download all transactions as CSV</p>
-              </div>
-            </div>
-          </button>
+            </button>
+          </form>
           
           <form method="POST" class="w-full m-0 p-0">
             <input type="hidden" name="action" value="logout" />
@@ -176,8 +216,45 @@ const currentUser = await db.select().from(users).where(eq(users.id, userId)).li
       background: transparent;
     }
     .custom-scrollbar::-webkit-scrollbar-thumb {
-      background-color: var(--color-border);
+      background-color: var(--border);
       border-radius: 20px;
     }
   </style>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const themeToggle = document.getElementById('theme-toggle');
+      const themeTrack = document.getElementById('theme-track');
+      const themeThumb = document.getElementById('theme-thumb');
+
+      const updateUI = (isDark: boolean) => {
+        if (isDark) {
+          themeTrack?.classList.add('bg-accent');
+          themeTrack?.classList.remove('bg-border');
+          themeThumb?.classList.add('translate-x-4');
+        } else {
+          themeTrack?.classList.remove('bg-accent');
+          themeTrack?.classList.add('bg-border');
+          themeThumb?.classList.remove('translate-x-4');
+        }
+      };
+
+      // Initial state
+      const isDark = document.documentElement.classList.contains('dark');
+      updateUI(isDark);
+
+      themeToggle?.addEventListener('click', () => {
+        const isDarkNow = document.documentElement.classList.contains('dark');
+        if (isDarkNow) {
+          document.documentElement.classList.remove('dark');
+          localStorage.setItem('theme', 'light');
+          updateUI(false);
+        } else {
+          document.documentElement.classList.add('dark');
+          localStorage.setItem('theme', 'dark');
+          updateUI(true);
+        }
+      });
+    });
+  </script>
 </AppLayout>

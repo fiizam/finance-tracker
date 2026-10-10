@@ -15,7 +15,7 @@ const isDemo = currentUser[0]?.email === 'demo@example.com';
 if (Astro.request.method === 'POST') {
   try {
     if (isDemo) {
-      error = 'Tindakan ini diblokir pada akun Demo untuk mencegah kerusakan data.';
+      error = 'This action is blocked on the Demo account to prevent data corruption.';
     } else {
       const data = await Astro.request.formData();
       const action = data.get('action');
@@ -36,13 +36,13 @@ if (Astro.request.method === 'POST') {
             }
             await dbTx.delete(transactions).where(eq(transactions.id, tx.id));
           });
-          success = 'Transaksi berhasil dihapus dan saldo telah dipulihkan.';
+          success = 'Transaction successfully deleted and balance restored.';
         }
       }
     }
   } catch (e) {
     console.error(e);
-    error = 'Terjadi kesalahan saat menghapus transaksi.';
+    error = 'An error occurred while deleting the transaction.';
   }
 }
 
@@ -188,7 +188,7 @@ const grouped = txData.reduce((acc, tx) => {
                     </div>
                     
                     <!-- Action Toggle Button (3 dots) -->
-                    <button type="button" class="flex items-center justify-center w-8 h-8 text-text-main bg-surface border border-border shadow-sm rounded-md hover:bg-surface-hover active:scale-95 transition-all btn-action-toggle" data-target={`menu-${tx.id}`} aria-label="Opsi Transaksi">
+                    <button type="button" class="flex items-center justify-center w-8 h-8 text-text-main bg-surface border border-border shadow-sm rounded-md hover:bg-surface-hover active:scale-95 transition-all btn-action-toggle" data-target={`menu-${tx.id}`} aria-label="Transaction Options">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 256 256"><path d="M128,140a12,12,0,1,1,12-12A12,12,0,0,1,128,140Zm0-56a12,12,0,1,0-12-12A12,12,0,0,0,128,84Zm0,112a12,12,0,1,0-12-12A12,12,0,0,0,128,196Z"></path></svg>
                     </button>
                   </div>
@@ -201,12 +201,12 @@ const grouped = txData.reduce((acc, tx) => {
                     Edit
                   </a>
                   <div class="w-px h-4 bg-border mx-1"></div>
-                  <form method="POST" class="m-0" onsubmit="return confirm('Hapus transaksi ini secara permanen?')">
+                  <form method="POST" class="m-0" onsubmit="return confirm('Delete this transaction permanently?')">
                     <input type="hidden" name="action" value="delete" />
                     <input type="hidden" name="txId" value={tx.id} />
                     <button type="submit" class="flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors">
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 256 256"><path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path></svg>
-                      Hapus
+                      Delete
                     </button>
                   </form>
                 </div>

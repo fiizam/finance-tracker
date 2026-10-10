@@ -19,7 +19,7 @@ if (Astro.request.method === 'POST') {
     const action = data.get('action')?.toString();
 
     if ((action === 'delete' || action === 'updateBalance') && isDemo) {
-      error = 'Tindakan ini diblokir pada akun Demo untuk mencegah kerusakan data.';
+      error = 'This action is blocked on the Demo account to prevent data corruption.';
     } else if (action === 'create') {
       const name = data.get('name')?.toString();
       const type = data.get('type')?.toString();
