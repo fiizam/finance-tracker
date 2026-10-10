@@ -57,25 +57,34 @@
   }
 }
 
-/* Subtle page transition styles if needed */
-.page-transition {
-  animation: fade-in 0.3s ease-out;
-}
-
-/* Smooth Theme Switching Transitions */
-body, 
+/* Smooth transitions for interactive elements (excluding background color to allow View Transitions) */
 .bg-surface, 
 .bg-surface-hover, 
-.bg-background, 
 .border-border,
-.text-text-main,
-.text-text-muted,
 .bg-accent,
-.text-accent,
 .border-text-muted {
-  transition-property: background-color, border-color, color, box-shadow;
-  transition-duration: 400ms;
+  transition-property: border-color, box-shadow, transform;
+  transition-duration: 200ms;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* View Transitions API overrides for Dark Mode Circular Reveal */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 1;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+.dark::view-transition-old(root) {
+  z-index: 2;
+}
+.dark::view-transition-new(root) {
+  z-index: 1;
 }
 
 @keyframes fade-in {

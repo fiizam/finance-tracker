@@ -270,26 +270,56 @@ const currentUser = await db.select().from(users).where(eq(users.id, userId)).li
       const isDark = document.documentElement.classList.contains('dark');
       updateUI(isDark);
 
-      themeToggle?.addEventListener('click', () => {
+      themeToggle?.addEventListener('click', (event) => {
         const isDarkNow = document.documentElement.classList.contains('dark');
         
-        // Add a smooth transition class to the html body during toggle
-        document.body.style.transition = 'background-color 0.6s cubic-bezier(0.22, 1, 0.36, 1), color 0.6s cubic-bezier(0.22, 1, 0.36, 1)';
-        
-        if (isDarkNow) {
-          document.documentElement.classList.remove('dark');
-          localStorage.setItem('theme', 'light');
-          updateUI(false);
-        } else {
-          document.documentElement.classList.add('dark');
-          localStorage.setItem('theme', 'dark');
-          updateUI(true);
+        const toggleTheme = () => {
+          if (isDarkNow) {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+            updateUI(false);
+          } else {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+            updateUI(true);
+          }
+        };
+
+        // Check if browser supports View Transitions API
+        if (!document.startViewTransition) {
+          toggleTheme();
+          return;
         }
-        
-        // Cleanup inline style after transition
-        setTimeout(() => {
-          document.body.style.transition = '';
-        }, 600);
+
+        // Calculate click coordinates for the center of the expanding circle
+        const x = (event as MouseEvent).clientX;
+        const y = (event as MouseEvent).clientY;
+        const endRadius = Math.hypot(
+          Math.max(x, innerWidth - x),
+          Math.max(y, innerHeight - y)
+        );
+
+        const transition = document.startViewTransition(() => {
+          toggleTheme();
+        });
+
+        transition.ready.then(() => {
+          const clipPath = [
+            `circle(0px at ${x}px ${y}px)`,
+            `circle(${endRadius}px at ${x}px ${y}px)`,
+          ];
+          
+          document.documentElement.animate(
+            {
+              clipPath: isDarkNow ? [...clipPath].reverse() : clipPath,
+            },
+            {
+              duration: 600,
+              easing: "ease-in-out",
+              pseudoElement: isDarkNow ? "::view-transition-old(root)" : "::view-transition-new(root)",
+            }
+          );
+        });
       });
 
       // Dropdown logic
