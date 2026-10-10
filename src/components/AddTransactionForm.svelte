@@ -162,13 +162,27 @@
     </div>
   </div>
 
-  <div class="pt-4 border-t border-border">
+  <div class="pt-6 mt-2 border-t border-border flex flex-col sm:flex-row gap-3">
+    {#if initialData}
+      <button 
+        type="submit"
+        name="action"
+        value="delete"
+        formnovalidate
+        class="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
+        on:click={(e) => {
+          if (!confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) e.preventDefault();
+        }}
+      >
+        Hapus Transaksi
+      </button>
+    {/if}
     <button 
       type="submit" 
       disabled={isSubmitting}
-      class="w-full bg-accent text-white rounded-md py-2.5 text-sm font-medium hover:bg-accent-hover transition-colors shadow-sm active:scale-[0.98] disabled:opacity-70"
+      class="flex-1 bg-accent text-white rounded-md py-2.5 text-sm font-medium hover:bg-accent-hover transition-colors shadow-sm active:scale-[0.98] disabled:opacity-70"
     >
-      {isSubmitting ? 'Saving...' : 'Save Transaction'}
+      {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
     </button>
   </div>
 </form>

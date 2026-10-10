@@ -44,6 +44,25 @@ if (Astro.request.method === 'POST') {
       error = 'Tindakan ini diblokir pada akun Demo untuk mencegah kerusakan data.';
     } else {
       const data = await Astro.request.formData();
+      const action = data.get('action')?.toString();
+
+      if (action === 'delete') {
+        await db.transaction(async (tx) => {
+          // Revert balances
+          if (existingTx.type === 'expense') {
+            await tx.update(accounts).set({ balance: sql`${accounts.balance} + ${existingTx.amount}` }).where(eq(accounts.id, existingTx.accountId));
+          } else if (existingTx.type === 'income') {
+            await tx.update(accounts).set({ balance: sql`${accounts.balance} - ${existingTx.amount}` }).where(eq(accounts.id, existingTx.accountId));
+          } else if (existingTx.type === 'transfer' && existingTx.toAccountId) {
+            await tx.update(accounts).set({ balance: sql`${accounts.balance} + ${existingTx.amount}` }).where(eq(accounts.id, existingTx.accountId));
+            await tx.update(accounts).set({ balance: sql`${accounts.balance} - ${existingTx.amount}` }).where(eq(accounts.id, existingTx.toAccountId));
+          }
+          // Delete transaction
+          await tx.delete(transactions).where(eq(transactions.id, existingTx.id));
+        });
+        return Astro.redirect('/app/transactions');
+      }
+
       const type = data.get('type')?.toString();
       const amountStr = data.get('amount')?.toString();
       const accountId = data.get('accountId')?.toString();
