@@ -74,14 +74,24 @@
   animation: none;
   mix-blend-mode: normal;
 }
+
+@keyframes clip-expand {
+  from { clip-path: circle(0px at var(--click-x, 50%) var(--click-y, 50%)); }
+  to   { clip-path: circle(var(--click-r, 150vw) at var(--click-x, 50%) var(--click-y, 50%)); }
+}
+
 ::view-transition-old(root) {
   z-index: 1;
 }
 ::view-transition-new(root) {
   z-index: 2;
+  animation: clip-expand 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
+
+/* Going dark -> light: animate the old (dark) snapshot shrinking */
 .dark::view-transition-old(root) {
   z-index: 2;
+  animation: clip-expand 0.7s cubic-bezier(0.4, 0, 0.2, 1) reverse forwards;
 }
 .dark::view-transition-new(root) {
   z-index: 1;
