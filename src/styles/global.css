@@ -85,13 +85,13 @@
 }
 ::view-transition-new(root) {
   z-index: 2;
-  animation: clip-expand 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: clip-expand 0.4s ease-out forwards;
 }
 
 /* Going dark -> light: animate the old (dark) snapshot shrinking */
 .dark::view-transition-old(root) {
   z-index: 2;
-  animation: clip-expand 0.7s cubic-bezier(0.4, 0, 0.2, 1) reverse forwards;
+  animation: clip-expand 0.4s ease-out reverse forwards;
 }
 .dark::view-transition-new(root) {
   z-index: 1;
