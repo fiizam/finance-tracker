@@ -21,47 +21,44 @@ export default function MobileDockNav({ currentPath: initialPath = "" }: MobileD
     }
   }, []);
 
+  const navigate = (href: string) => {
+    if (typeof window !== "undefined") {
+      (window as any).startPageLoader?.();
+      window.location.href = href;
+    }
+  };
+
   const items: DockItem[] = [
     {
       label: "Home",
       icon: Home,
       isActive: currentPath === "/app" || currentPath === "/app/",
-      onClick: () => {
-        window.location.href = "/app";
-      },
+      onClick: () => navigate("/app"),
     },
     {
       label: "Transactions",
       icon: List,
       isActive: currentPath.startsWith("/app/transactions") && !currentPath.includes("/new"),
-      onClick: () => {
-        window.location.href = "/app/transactions";
-      },
+      onClick: () => navigate("/app/transactions"),
     },
     {
       label: "Add",
       icon: Plus,
       isPrimary: true,
       isActive: currentPath.includes("/transactions/new"),
-      onClick: () => {
-        window.location.href = "/app/transactions/new";
-      },
+      onClick: () => navigate("/app/transactions/new"),
     },
     {
       label: "Insights",
       icon: TrendingUp,
       isActive: currentPath.startsWith("/app/insights"),
-      onClick: () => {
-        window.location.href = "/app/insights";
-      },
+      onClick: () => navigate("/app/insights"),
     },
     {
       label: "Settings",
       icon: Settings,
       isActive: currentPath.startsWith("/app/settings"),
-      onClick: () => {
-        window.location.href = "/app/settings";
-      },
+      onClick: () => navigate("/app/settings"),
     },
   ];
 

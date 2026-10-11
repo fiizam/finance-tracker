@@ -1,0 +1,182 @@
+---
+// src/components/TopProgressBar.astro
+// Minimalist, high-performance top progress bar and button loading micro-interactions
+---
+
+<div 
+  id="top-progress-bar" 
+  class="fixed top-0 left-0 right-0 h-[2.5px] z-[9999] pointer-events-none opacity-0 transition-opacity duration-200"
+  aria-hidden="true"
+>
+  <div 
+    id="top-progress-bar-fill" 
+    class="h-full bg-accent relative w-0 transition-all duration-300 ease-out"
+    style="box-shadow: 0 0 8px var(--color-accent), 0 0 3px var(--color-accent);"
+  >
+    <!-- Subtle luminous glow at leading tip -->
+    <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-transparent via-white/30 to-white/70"></div>
+  </div>
+</div>
+
+<script>
+  const bar = document.getElementById('top-progress-bar');
+  const fill = document.getElementById('top-progress-bar-fill');
+  let progress = 0;
+  let trickleInterval: number | null = null;
+  let isRunning = false;
+
+  function startProgress() {
+    if (!bar || !fill) return;
+    if (isRunning) return;
+    isRunning = true;
+
+    if (trickleInterval) {
+      clearInterval(trickleInterval);
+      trickleInterval = null;
+    }
+
+    progress = 0;
+    fill.style.transition = 'width 100ms ease-out';
+    fill.style.width = '0%';
+    bar.style.opacity = '1';
+
+    requestAnimationFrame(() => {
+      progress = 22;
+      fill.style.width = '22%';
+
+      trickleInterval = window.setInterval(() => {
+        if (progress < 60) {
+          progress += Math.random() * 8 + 4;
+        } else if (progress < 85) {
+          progress += Math.random() * 3 + 1;
+        }
+        if (progress > 88) progress = 88;
+        
+        fill.style.transition = 'width 250ms cubic-bezier(0.4, 0, 0.2, 1)';
+        fill.style.width = `${progress}%`;
+      }, 200);
+    });
+  }
+
+  function finishProgress() {
+    if (!bar || !fill) return;
+    if (trickleInterval) {
+      clearInterval(trickleInterval);
+      trickleInterval = null;
+    }
+
+    progress = 100;
+    fill.style.transition = 'width 150ms ease-out';
+    fill.style.width = '100%';
+
+    setTimeout(() => {
+      bar.style.opacity = '0';
+      setTimeout(() => {
+        fill.style.transition = 'none';
+        fill.style.width = '0%';
+        isRunning = false;
+      }, 200);
+    }, 150);
+  }
+
+  // Intercept internal link clicks
+  document.addEventListener('click', (e) => {
+    const link = (e.target as HTMLElement)?.closest('a');
+    if (!link) return;
+
+    const href = link.getAttribute('href');
+    if (!href) return;
+
+    if (
+      href.startsWith('#') ||
+      href.startsWith('javascript:') ||
+      link.getAttribute('target') === '_blank' ||
+      link.hasAttribute('download') ||
+      e.ctrlKey || e.metaKey || e.shiftKey || e.altKey
+    ) {
+      return;
+    }
+
+    try {
+      const url = new URL(href, window.location.origin);
+      if (url.origin === window.location.origin && (url.pathname !== window.location.pathname || url.search !== window.location.search)) {
+        startProgress();
+      }
+    } catch {
+      // Ignore
+    }
+  });
+
+  // Finish loading when page finishes rendering or returns via browser back/forward
+  window.addEventListener('pageshow', () => {
+    finishProgress();
+    resetSubmittingButtons();
+  });
+
+  // Handle form submissions globally
+  let activeSubmitButton: HTMLButtonElement | null = null;
+  let originalButtonContent = '';
+
+  function resetSubmittingButtons() {
+    if (activeSubmitButton) {
+      activeSubmitButton.disabled = false;
+      activeSubmitButton.innerHTML = originalButtonContent;
+      activeSubmitButton.style.minWidth = '';
+      activeSubmitButton.style.cursor = '';
+      activeSubmitButton.style.opacity = '';
+      activeSubmitButton = null;
+      originalButtonContent = '';
+    }
+  }
+
+  document.addEventListener('submit', (e) => {
+    const form = e.target as HTMLFormElement;
+    if (!form || form.getAttribute('target') === '_blank') return;
+
+    startProgress();
+
+    const submitBtn = ((e as any).submitter || form.querySelector('button[type="submit"]')) as HTMLButtonElement | null;
+    if (submitBtn && !submitBtn.hasAttribute('data-no-loading') && !activeSubmitButton) {
+      activeSubmitButton = submitBtn;
+      originalButtonContent = submitBtn.innerHTML;
+
+      const currentWidth = submitBtn.offsetWidth;
+      submitBtn.style.minWidth = `${currentWidth}px`;
+      
+      const currentText = submitBtn.textContent?.trim() || '';
+      let loadingText = currentText;
+      const lower = currentText.toLowerCase();
+
+      if (lower.includes('sign in') || lower.includes('login')) {
+        loadingText = 'Signing in...';
+      } else if (lower.includes('save') || lower.includes('update')) {
+        loadingText = 'Saving...';
+      } else if (lower.includes('delete') || lower.includes('remove')) {
+        loadingText = 'Deleting...';
+      } else if (lower.includes('export') || lower.includes('download')) {
+        loadingText = 'Exporting...';
+      } else if (lower.includes('create') || lower.includes('add')) {
+        loadingText = 'Creating...';
+      } else if (lower.includes('send')) {
+        loadingText = 'Sending...';
+      } else {
+        loadingText = 'Processing...';
+      }
+
+      const spinnerSvg = `
+        <svg class="animate-spin h-3.5 w-3.5 inline-block shrink-0 text-current opacity-90" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3.5"></circle>
+          <path class="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      `;
+
+      submitBtn.disabled = true;
+      submitBtn.style.cursor = 'wait';
+      submitBtn.style.opacity = '0.85';
+      submitBtn.innerHTML = `<span class="inline-flex items-center justify-center gap-2">${spinnerSvg}<span>${loadingText}</span></span>`;
+    }
+  });
+
+  (window as any).startPageLoader = startProgress;
+  (window as any).stopPageLoader = finishProgress;
+</script>
