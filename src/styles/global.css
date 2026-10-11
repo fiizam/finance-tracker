@@ -9,6 +9,18 @@
   --color-border: var(--border);
   --color-text-main: var(--text-main);
   --color-text-muted: var(--text-muted);
+
+  --color-primary: var(--accent);
+  --color-primary-foreground: #FFFFFF;
+  --color-foreground: var(--text-main);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--text-main);
+  --color-input: var(--border);
+  --color-ring: var(--accent);
+  --color-secondary: var(--surface-hover);
+  --color-secondary-foreground: var(--text-main);
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #FFFFFF;
   
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-display: 'Outfit', system-ui, sans-serif;
