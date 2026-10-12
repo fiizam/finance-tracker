@@ -37,7 +37,12 @@ import Layout from '../layouts/Layout.astro';
         });
       });
 
-      // We don't fade out until we actually leave, to prevent white screen
+      // Mark splash as shown in this session
+      try {
+        sessionStorage.setItem('splash_shown', 'true');
+      } catch (e) {}
+
+      // Navigate to /app after splash animation
       setTimeout(() => {
         window.location.href = '/app';
       }, 1500);

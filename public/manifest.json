@@ -1,16 +1,22 @@
 {
-  "name": "Antigravity Finance",
+  "name": "Finance",
   "short_name": "Finance",
-  "start_url": "/app",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#FAFAFA",
+  "background_color": "#04471C",
   "theme_color": "#04471C",
   "icons": [
     {
-      "src": "/centrahub-favicon.png",
-      "sizes": "192x192 512x512",
+      "src": "/apple-touch-icon.png",
+      "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
