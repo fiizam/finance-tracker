@@ -1,0 +1,103 @@
+---
+// src/components/AndroidDownloadBanner.astro
+// Only shown on Android mobile browsers (hidden on iOS, Windows, Mac, and standalone PWA)
+---
+
+<div
+  id="android-apk-banner"
+  class="hidden fixed bottom-4 left-4 right-4 z-50 max-w-md mx-auto animate-fade-in"
+  role="alert"
+  aria-live="polite"
+>
+  <div class="bg-[#18181B]/95 text-white backdrop-blur-md border border-white/10 rounded-2xl p-3.5 shadow-2xl flex items-center justify-between gap-3">
+    <!-- Icon & Info -->
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="w-10 h-10 rounded-xl bg-[#04471C] flex items-center justify-center shrink-0 border border-emerald-500/30 shadow-inner">
+        <!-- Android / Download Icon -->
+        <svg class="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
+          <path d="M12 18h.01"/>
+          <path d="M12 7v5"/>
+          <path d="m9 10 3 3 3-3"/>
+        </svg>
+      </div>
+      <div class="min-w-0">
+        <p class="text-xs font-semibold text-white tracking-tight flex items-center gap-1.5 truncate">
+          Aplikasi Android (.apk)
+          <span class="text-[9px] font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.2 rounded-full uppercase">Resmi</span>
+        </p>
+        <p class="text-[11px] text-zinc-400 truncate">Unduh APK untuk splash screen & performa penuh</p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-1.5 shrink-0">
+      <a
+        id="apk-download-btn"
+        href="/finance.apk"
+        download="finance.apk"
+        class="bg-[#04471C] hover:bg-[#065F26] text-white text-xs font-medium px-3 py-1.5 rounded-lg border border-emerald-500/40 shadow-sm transition-colors active:scale-95 flex items-center gap-1.5"
+      >
+        <span>Download</span>
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" x2="12" y1="15" y2="3"/>
+        </svg>
+      </a>
+
+      <!-- Dismiss Button -->
+      <button
+        id="dismiss-apk-banner-btn"
+        type="button"
+        class="text-zinc-400 hover:text-white p-1.5 rounded-lg transition-colors"
+        aria-label="Tutup pemberitahuan"
+      >
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (() => {
+    // Strict Device Filter: ONLY Android
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    
+    // Hide if already running in standalone PWA / installed app
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    
+    // Check if dismissed recently (within 3 days)
+    const dismissedTime = localStorage.getItem('apk_banner_dismissed_time');
+    const isDismissed = dismissedTime && (Date.now() - Number(dismissedTime) < 86400000 * 3);
+
+    const banner = document.getElementById('android-apk-banner');
+    const dismissBtn = document.getElementById('dismiss-apk-banner-btn');
+    const downloadBtn = document.getElementById('apk-download-btn');
+
+    // ONLY show if user is on Android, NOT standalone, and NOT dismissed
+    if (isAndroid && !isStandalone && !isDismissed && banner) {
+      banner.classList.remove('hidden');
+    }
+
+    dismissBtn?.addEventListener('click', () => {
+      if (banner) banner.classList.add('hidden');
+      try {
+        localStorage.setItem('apk_banner_dismissed_time', Date.now().toString());
+      } catch (e) {}
+    });
+
+    downloadBtn?.addEventListener('click', () => {
+      // Auto-hide banner after download starts
+      setTimeout(() => {
+        if (banner) banner.classList.add('hidden');
+        try {
+          localStorage.setItem('apk_banner_dismissed_time', Date.now().toString());
+        } catch (e) {}
+      }, 1000);
+    });
+  })();
+</script>

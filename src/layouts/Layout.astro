@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import TopProgressBar from '../components/TopProgressBar.astro';
 import MobileAppSplash from '../components/MobileAppSplash.astro';
+import AndroidDownloadBanner from '../components/AndroidDownloadBanner.astro';
 
 interface Props {
   title: string;
@@ -88,6 +89,7 @@ const { title, description = 'Personal finance companion.' } = Astro.props;
   <body class="bg-background text-text-main antialiased min-h-screen page-transition">
     <MobileAppSplash />
     <TopProgressBar />
+    <AndroidDownloadBanner />
     <slot />
     
     <script>
