@@ -67,7 +67,22 @@ const { title, description = 'Personal finance companion.' } = Astro.props;
         document.documentElement.classList.add('dark');
       }
       window.localStorage.setItem('theme', theme);
+
+      try {
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        const isMobile = window.innerWidth <= 768 || isStandalone;
+        if (isMobile && !sessionStorage.getItem('splash_shown')) {
+          document.documentElement.classList.add('show-mobile-splash');
+        }
+      } catch (e) {}
     </script>
+    <style is:inline>
+      html.show-mobile-splash #app-splash-screen {
+        opacity: 1 !important;
+        display: flex !important;
+        pointer-events: auto !important;
+      }
+    </style>
     <title>{title}</title>
   </head>
   <body class="bg-background text-text-main antialiased min-h-screen page-transition">
