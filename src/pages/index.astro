@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="Welcome">
-  <div class="fixed inset-0 bg-accent flex flex-col items-center justify-center overflow-hidden z-50 transition-opacity duration-500" id="splash">
+  <div class="fixed inset-0 bg-[#04471C] flex flex-col items-center justify-center overflow-hidden z-50 transition-opacity duration-500" id="splash">
     <!-- Subtle Parallax Background Elements -->
     <div class="absolute inset-0 opacity-10 pointer-events-none">
       <div class="absolute top-1/4 left-1/4 w-64 h-64 border border-white rounded-full splash-parallax" data-speed="2"></div>
@@ -12,7 +12,7 @@ import Layout from '../layouts/Layout.astro';
     
     <div class="relative z-10 flex flex-col items-center animate-fade-in-up">
       <div class="w-16 h-16 bg-white flex items-center justify-center mb-6 rounded-sm shadow-xl transform rotate-3">
-        <span class="text-accent font-display font-bold text-3xl leading-none tracking-tighter">F</span>
+        <span class="text-[#04471C] font-display font-bold text-3xl leading-none tracking-tighter">F</span>
       </div>
       <h1 class="text-white font-display text-4xl tracking-tight font-medium mb-2">Finance</h1>
       <p class="text-white/70 font-sans text-sm tracking-wide uppercase">Your Money Journal</p>
@@ -42,10 +42,13 @@ import Layout from '../layouts/Layout.astro';
         sessionStorage.setItem('splash_shown', 'true');
       } catch (e) {}
 
-      // Navigate to /app after splash animation
+      // In standalone PWA, native splash was already shown, transition cleanly to /app
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+      const delay = isStandalone ? 400 : 1200;
+
       setTimeout(() => {
-        window.location.href = '/app';
-      }, 1500);
+        window.location.replace('/app');
+      }, delay);
     });
   </script>
 

@@ -14,7 +14,7 @@
     <div class="absolute bottom-1/4 right-1/4 w-96 h-96 border border-white rounded-full"></div>
   </div>
   
-  <div class="relative z-10 flex flex-col items-center animate-fade-in-up">
+  <div class="relative z-10 flex flex-col items-center">
     <div class="w-16 h-16 bg-white flex items-center justify-center mb-6 rounded-sm shadow-xl transform rotate-3">
       <span class="text-[#04471C] font-display font-bold text-3xl leading-none tracking-tighter">F</span>
     </div>
@@ -45,15 +45,15 @@
         sessionStorage.setItem('splash_shown', 'true');
       } catch (e) {}
 
-      // Fade out smoothly after 1.2s
+      // Fade out smoothly after 700ms
       setTimeout(() => {
-        splash.style.transition = 'opacity 500ms ease-out';
+        splash.style.transition = 'opacity 400ms ease-out';
         splash.style.opacity = '0';
         setTimeout(() => {
           document.documentElement.classList.remove('show-mobile-splash');
           splash.style.display = 'none';
-        }, 500);
-      }, 1200);
+        }, 400);
+      }, 700);
     }
   })();
 </script>
