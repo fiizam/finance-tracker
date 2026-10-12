@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.vercel.finance_tracker_qkpb.twa",
+      "sha256_cert_fingerprints": [
+        "F0:75:C2:0E:9B:A2:D7:A3:B4:AD:A8:E3:77:FF:B2:0B:CE:A6:16:E7:3B:EB:6F:EE:95:11:05:FE:8F:4B:D1:D6"
+      ]
+    }
+  }
+]
