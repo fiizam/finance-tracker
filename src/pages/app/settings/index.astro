@@ -278,10 +278,12 @@ const currentUser = await db.select().from(users).where(eq(users.id, userId)).li
           if (isDarkNow) {
             document.documentElement.classList.remove('dark');
             localStorage.setItem('theme', 'light');
+            localStorage.setItem('theme_configured', 'true');
             updateUI(false);
           } else {
             document.documentElement.classList.add('dark');
             localStorage.setItem('theme', 'dark');
+            localStorage.setItem('theme_configured', 'true');
             updateUI(true);
           }
         };

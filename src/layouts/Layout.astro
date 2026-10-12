@@ -56,18 +56,20 @@ const { title, description = 'Personal finance companion.' } = Astro.props;
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
     <script is:inline>
       const theme = (() => {
-        if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
-          return localStorage.getItem('theme');
-        }
-        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-          return 'dark';
+        if (typeof localStorage !== 'undefined') {
+          const configured = localStorage.getItem('theme_configured');
+          const savedTheme = localStorage.getItem('theme');
+          if (configured === 'true' && savedTheme) {
+            return savedTheme;
+          }
         }
         return 'light';
       })();
       if (theme === 'dark') {
         document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
       }
-      window.localStorage.setItem('theme', theme);
 
       try {
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
