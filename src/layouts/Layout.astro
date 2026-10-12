@@ -26,27 +26,30 @@ const { title, description = 'Personal finance companion.' } = Astro.props;
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-    <!-- iPhone Launch Splash Screens (Matches Device Screen Sizes Exactly) -->
-    <!-- iPhone 16 Pro Max -->
-    <link rel="apple-touch-startup-image" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash.png" />
-    <!-- iPhone 14 Pro Max, 15 Plus, 15 Pro Max, 16 Plus -->
-    <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash.png" />
-    <!-- iPhone 14 Pro, 15, 15 Pro, 16, 16 Pro -->
-    <link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash.png" />
-    <!-- iPhone 12, 12 Pro, 13, 13 Pro, 14 -->
-    <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash.png" />
-    <!-- iPhone 12 Pro Max, 13 Pro Max, 14 Plus -->
-    <link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash.png" />
-    <!-- iPhone 11 Pro, XS, X -->
-    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash.png" />
-    <!-- iPhone 11, XR -->
-    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/apple-splash.png" />
-    <!-- iPhone 11 Pro Max, XS Max -->
-    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash.png" />
-    <!-- iPhone 7, 8, SE (2nd/3rd Gen) -->
-    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/apple-splash.png" />
+    <!-- iPhone Launch Splash Screens (Exact Resolution Match for iOS WebKit) -->
+    <!-- iPhone 16 Pro Max (440x956 @3x -> 1320x2868) -->
+    <link rel="apple-touch-startup-image" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash-1320x2868.png" />
+    <!-- iPhone 16 Pro (402x874 @3x -> 1206x2622) -->
+    <link rel="apple-touch-startup-image" media="(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash-1206x2622.png" />
+    <!-- iPhone 14 Pro Max, 15 Plus, 15 Pro Max, 16 Plus (430x932 @3x -> 1290x2796) -->
+    <link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash-1290x2796.png" />
+    <!-- iPhone 14 Pro, 15, 15 Pro (393x852 @3x -> 1179x2556) -->
+    <link rel="apple-touch-startup-image" media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash-1179x2556.png" />
+    <!-- iPhone 12, 12 Pro, 13, 13 Pro, 14 (390x844 @3x -> 1170x2532) -->
+    <link rel="apple-touch-startup-image" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash-1170x2532.png" />
+    <!-- iPhone 12 Pro Max, 13 Pro Max, 14 Plus (428x926 @3x -> 1284x2778) -->
+    <link rel="apple-touch-startup-image" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash-1284x2778.png" />
+    <!-- iPhone 11 Pro, XS, X (375x812 @3x -> 1125x2436) -->
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash-1125x2436.png" />
+    <!-- iPhone 11, XR (414x896 @2x -> 828x1792) -->
+    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/apple-splash-828x1792.png" />
+    <!-- iPhone 11 Pro Max, XS Max (414x896 @3x -> 1242x2688) -->
+    <link rel="apple-touch-startup-image" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/apple-splash-1242x2688.png" />
+    <!-- iPhone 7, 8, SE (375x667 @2x -> 750x1334) -->
+    <link rel="apple-touch-startup-image" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/apple-splash-750x1334.png" />
     <!-- Universal fallback -->
     <link rel="apple-touch-startup-image" href="/apple-splash.png" />
+    <link rel="apple-touch-startup-image" href="/apple-splash-1179x2556.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600&display=swap" rel="stylesheet">
