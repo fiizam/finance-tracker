@@ -8,7 +8,7 @@ astro dev --background
 
 Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
 
-## Documentation
+## Documentation in Apps Finance
 
 Full documentation: https://docs.astro.build
 
