@@ -1,4 +1,4 @@
-# Antigravity Finance
+# Finance Apps
 
 A modern, fast, and secure personal finance application built with an extreme focus on design and user experience. Track accounts, monitor cash flow, and manage transactions through a clean, Linear-inspired interface.
 
