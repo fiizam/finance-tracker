@@ -4,7 +4,7 @@ A modern, fast, and secure personal finance application built with an extreme fo
 
 ## Features
 
-- **Minimalist Interface:** Designed with Tailwind CSS v4 featuring soft border-radii, blurred glassmorphic backgrounds, and subtle micro-interactions (staggered fade-ins and scale states) for a native app feel.
+- **Interface:** Designed with Tailwind CSS v4 featuring soft border-radii, blurred glassmorphic backgrounds, and subtle micro-interactions (staggered fade-ins and scale states) for a native app feel.
 - **Robust Authentication:** 
   - JWT-based session management
   - SMTP-based email verification using OTP codes
